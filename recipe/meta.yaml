@@ -11,6 +11,8 @@ source:
 
 build:
   number: 0
+  # nothing provides requested go_linux-s390x
+  skip: true  # [s390x]
   script_env:
     - GH_VERSION=v{{ version }}
 
