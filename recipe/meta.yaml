@@ -1,5 +1,5 @@
 {% set name = "gh" %}
-{% set version = "2.68.1" %}
+{% set version = "2.83.1" %}
 
 package:
   name: {{ name|lower }}
@@ -7,18 +7,18 @@ package:
 
 source:
   url: https://github.com/cli/cli/archive/v{{ version }}.tar.gz
-  sha256: 520ab7ca5eda31af4aab717e1f9bc65497cdc23a46f71dab56d47513e00c7b82
+  sha256: 5053825b631fa240bba1bfdb3de6ac2c7af5e3c7884b755a6a5764994d02f999
 
 build:
   number: 0
-  # nothing provides requested go_linux-s390x
-  skip: true  # [s390x]
   script_env:
     - GH_VERSION=v{{ version }}
 
 requirements:
   build:
     - {{ compiler('go') }}
+    - {{ stdlib("c") }}
+    - make  # [unix]
 
 test:
   commands:
@@ -34,7 +34,7 @@ about:
   description: |
     gh is GitHub on the command line. It brings pull requests, issues,
     and other GitHub concepts to the terminal next to where you are already working with git and your code.
-  doc_url: https://cli.github.com/
+  doc_url: https://cli.github.com
   dev_url: https://github.com/cli/cli
 
 extra:
