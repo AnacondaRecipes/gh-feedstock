@@ -1,41 +1,44 @@
-{% set name = "gh" %}
-{% set version = "2.83.1" %}
+{% set version="2.103.3" %}
 
 package:
-  name: {{ name|lower }}
+  name: gh
   version: {{ version }}
 
 source:
-  url: https://github.com/cli/cli/archive/v{{ version }}.tar.gz
-  sha256: 5053825b631fa240bba1bfdb3de6ac2c7af5e3c7884b755a6a5764994d02f999
+  - url: https://github.com/cli/cli/archive/v{{ version }}.tar.gz
+    sha256: bb148138a3a2fe023e57c78042fe3b42fc09171c0e8fff4cf983b227b7a2eade
 
 build:
   number: 0
-  script_env:
-    - GH_VERSION=v{{ version }}
+  script:
+      - cd cmd/gh
+      - go-licenses save . --save_path ../../../library_licenses --ignore github.com/cyberphone/json-canonicalization --ignore github.com/in-toto/attestation --ignore github.com/in-toto/in-toto-golang --ignore github.com/alecthomas/chroma
+      - go build -v {{ "-buildmode=exe" if ppc64le else "" }} -o $PREFIX/bin/gh -ldflags="-s -w -X github.com/cli/cli/v2/internal/build.Version={{ version }}" # [unix]
+      - go build -v -o %LIBRARY_BIN%\gh.exe -ldflags="-s -X github.com/cli/cli/v2/internal/build.Version={{ version }}" # [not unix]
+      - cd ../..
+
+      # generate manpages with a build-platform binary; a target PIE build of gen-docs crashes on linux-ppc64le
+      - GOOS= GOARCH= go run ./cmd/gen-docs --man-page --doc-path ./share/man/man1/                               # [unix]
+      - mkdir -p $PREFIX/share/man/man1                        # [unix]
+      - install -m644 ./share/man/man1/* $PREFIX/share/man/man1 # [unix]
+      - mkdir -p $PREFIX/share/zsh/site-functions $PREFIX/share/bash-completion/completions $PREFIX/share/fish/vendor_completions.d # [unix]
+      - $PREFIX/bin/gh completion --shell zsh > $PREFIX/share/zsh/site-functions/_gh # [unix]
+      - $PREFIX/bin/gh completion --shell bash > $PREFIX/share/bash-completion/completions/gh # [unix]
+      - $PREFIX/bin/gh completion --shell fish > $PREFIX/share/fish/vendor_completions.d/gh.fish # [unix]
 
 requirements:
   build:
-    - {{ compiler('go') }}
-    - {{ stdlib("c") }}
-    - make  # [unix]
-
-test:
-  commands:
-    - gh help
-    - gh version
+    - {{ compiler('go-nocgo') }}
+    - go-licenses
 
 about:
-  home: https://github.com/cli/cli
+  homepage: https://github.com/cli/cli
   license: Apache-2.0
-  license_family: APACHE
-  license_file: LICENSE
+  license_file:
+    - LICENSE
   summary: Github CLI.
-  description: |
-    gh is GitHub on the command line. It brings pull requests, issues,
-    and other GitHub concepts to the terminal next to where you are already working with git and your code.
-  doc_url: https://cli.github.com
-  dev_url: https://github.com/cli/cli
+  documentation: https://cli.github.com/
+  repository: https://github.com/cli/cli
 
 extra:
   recipe-maintainers:
@@ -43,3 +46,4 @@ extra:
     - rluria14
     - oblute
     - matthiasdiener
+    - pavelzw
